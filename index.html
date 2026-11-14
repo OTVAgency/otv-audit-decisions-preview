@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>OTV Site Audit · Decisions (Preview)</title>
+  <script>
+    // Edit this one array to add or update decision cards, including the coming-soon group.
+    const ITEMS = [
+      { id: 'task-01', group: 'Task list', title: "Fix every homepage CTA: either publish the Intake page or ship PR #37's fallback to an on-page WPForms #1503 contact section.", owner: 'Forge (Cory picks)', effort: '1–2 h', needs: 'APPROVED (live site)', context: 'Cory should note which option: publish Intake vs on-page WPForms #1503. All 8 homepage CTAs currently return 404; /intake/ is also 404. Already partly built in PR #37 (preview only, not deployed).' },
+      { id: 'task-02', group: 'Task list', title: 'End-to-end form test after the fix. Confirm the email from wordpress@otv.agency lands in the cory@otv.agency Inbox, not Spam.', owner: 'Forge', effort: '30 min', needs: 'No', context: 'Run after the lead-path fix. The Oct 30 Forge test reached the Inbox; no real site-form leads were found in the past 90 days, which does not prove no one tried.' },
+      { id: 'task-03', group: 'Task list', title: 'Gmail filter in cory@otv.agency: from:wordpress@otv.agency → Never send to Spam + label "Leads/otv.agency". Add a second filter for from:wordpress@teamee88.com (now in Spam).', owner: 'Cory (or Forge with OK)', effort: '10 min', needs: 'Cory OK (mailbox setting)', context: 'Second filter: from:wordpress@teamee88.com → Never send it to Spam. Optional third filter: from:notifications@riverside.fm → Never send it to Spam (export-ready emails were in Spam Nov 4–5). Recommended filters have not been created.' },
+      { id: 'task-04', group: 'Task list', title: 'Compress and convert hero-bg.jpg, about-studio.jpg, and large logo PNGs to WebP with responsive sizes. Target LCP under 4 s on mobile.', owner: 'Forge', effort: '1–2 h', needs: 'APPROVED (live site)', context: 'Hero: 2.6 MB; about photo: 1.8 MB; Staunton Storm logo: 599 KB. Estimated image savings: about 4.8 MB. Already partly built in PR #37 (preview only, not deployed).' },
+      { id: 'task-05', group: 'Task list', title: 'Rename the site title and schema org from "On The Verge Marketing" / "My WordPress" to OTV Agency. Fix og:site_name and add a 1200×630 OG image and a new favicon.', owner: 'Pixel (image) + Forge', effort: '1–2 h', needs: 'APPROVED (live site)', context: 'Shared links currently show no preview image; the Twitter card is set to "summary". The favicon is a 2023 crop. Already partly built in PR #37 (preview only, not deployed).' },
+      { id: 'task-06', group: 'Task list', title: 'Unpublish/noindex the legacy pages /home-2/, /about-2/, /services-2/, /contact-2/, and /coming-soon/. 301 them to current sections and drop them from the sitemap.', owner: 'Forge', effort: '1–2 h', needs: 'APPROVED (live site)', context: 'Legacy pages remain indexable with old copy. /contact/ and /contact-2/ list info@ and support@onthevergemarketing.com. The working WPForms #1503 form is currently only on /coming-soon/; coordinate with the lead-path fix.' },
+      { id: 'task-07', group: 'Task list', title: 'Decide whether to keep the old /shop/ (logo tee, $9.97 ebook). If not, remove it and stop loading WooCommerce on the homepage.', owner: 'Cory decides → Forge', effort: '30 min + 1 h', needs: 'Cory decision + APPROVED', context: 'Choice for notes: keep vs remove the old shop. The shop and 2 products are still in the sitemap; WooCommerce assets load on the marketing homepage.' },
+      { id: 'task-08', group: 'Task list', title: 'Apply the Slate Lagoon B tokens (PR #37 does the first pass), then do a full brand pass for light/dark, buttons, and the favicon.', owner: 'Pixel + Forge', effort: '3–6 h', needs: 'APPROVED (live site)', context: 'Approved brand: dark #111d24, accent #3fbfd2, light #f5f2ec, accent on light #135a66. The live site still uses the September palette. PR #37 is preview only, not deployed.' },
+      { id: 'task-09', group: 'Task list', title: 'Add security headers: HSTS, Referrer-Policy, and frame-ancestors/X-Frame-Options. Disable XML-RPC if unused.', owner: 'Forge', effort: '30–60 min', needs: 'APPROVED (live site)', context: 'nosniff and X-XSS-Protection are present. HSTS, Content-Security-Policy, X-Frame-Options/frame-ancestors, and Referrer-Policy are missing.' },
+      { id: 'task-10', group: 'Task list', title: 'DMARC: add a rua reporting address now, then move from p=none to p=quarantine after 2–4 clean weeks.', owner: 'Forge', effort: '15 min + review', needs: 'APPROVED (DNS)', context: 'SPF includes Google and the SiteGround smarthost (~all). Google and SiteGround DKIM records are published. DMARC is currently p=none with no rua reporting address.' },
+      { id: 'task-11', group: 'Task list', title: 'Tracking: pick GA4 or HubSpot as the source of truth, add a form-submit conversion event, and confirm Search Console has the sitemap.', owner: 'Cory decides → Forge', effort: '1–2 h', needs: 'Cory decision + APPROVED', context: 'Choice for notes: GA4 vs HubSpot. HubSpot (portal 247843602) loads and costs about 530 ms of mobile main-thread time. No GA4/gtag, GTM, Meta pixel, or form-submit conversion event was found. Search Console data was not checked without account access.' },
+      { id: 'task-12', group: 'Task list', title: 'Trust: add 2–3 more client quotes, a Google review count/link, and a real booking link for "Book a Discovery Call".', owner: 'Cory (quotes) + Pixel', effort: '2–3 h', needs: 'Cory decision', context: 'Six linked case studies and 6 more client logos are present. Only one testimonial (Norman Harris) is shown; no Google review count/rating, phone number, or booking calendar is shown.' },
+      { id: 'task-13a', group: 'Task list', title: 'PR #37 open question: public email (info@ vs cory@).', owner: 'Cory', effort: '10 min (shared with task-13b)', needs: 'Cory decision', context: "Split from task 13: Answer PR #37's open questions. Choice for notes: info@otv.agency vs cory@otv.agency as the public email. The homepage currently links to mailto:info@otv.agency." },
+      { id: 'task-13b', group: 'Task list', title: 'PR #37 open question: whether to keep the $500 new-client offer.', owner: 'Cory', effort: '10 min (shared with task-13a)', needs: 'Cory decision', context: "Split from task 13: Answer PR #37's open questions. Choice for notes: keep vs drop the $500 new-client offer. The current \"$500 off\" bundle offer has no base price." },
+      { id: 'task-14', group: 'Task list', title: 'Update the expired card on file (the SiteGround monthly renewal failed Nov 3 and a PayPal expired-card notice arrived Nov 2).', owner: 'Cory', effort: '5 min', needs: 'Cory', context: 'SiteGround GrowBig is billed monthly. The renewal failed Nov 3 and succeeded Nov 7. The exact next renewal date was not opened.' },
+      { id: 'task-15', group: 'Task list', title: "SSL check around Dec 10: confirm the Let's Encrypt auto-renewal before Dec 18.", owner: 'Forge', effort: '10 min', needs: 'No', context: "The Let's Encrypt wildcard (*.otv.agency + apex) expires Dec 18, 2026, 6:06 PM ET. SiteGround normally auto-renews it; this audit did not confirm that. Admin access is needed to verify renewal settings." },
+      { id: 'task-16', group: 'Task list', title: 'Separate client issue: teamee88.com (Eleven Eleven Eighty Eight) has sent WordPress fatal-error emails daily since Nov 3. Investigate.', owner: 'Forge', effort: '1 h', needs: 'Client site; APPROVED for changes', context: 'Separate client site. At least 10 "[Eleven Eleven Eighty Eight] Your Site is Experiencing a Technical Issue" emails from wordpress@teamee88.com to devtest@otv.agency were found in Spam, Nov 2–Nov 13 ET.' },
+      { id: 'price-tier', group: 'Selling this audit: pricing', title: 'Lead with Audit + Fix Plan at $895 (vs Site Check $495 or Audit + Implementation from $1,895).', owner: 'Cory', effort: 'Not specified', needs: 'Cory decision', context: 'These prices are a recommendation, not a decided rate. Lead with Audit + Fix Plan at $895: in the middle of the comprehensive small-business range and below the $1,500 cap for a base tier. Demand signal: Alignable asked on Nov 11 whether OTV offers technical SEO audits. Market ranges below are from the audit’s 2026 pricing references.', tiers: [
+        { name: 'Site Check (audit only)', includes: 'The checks on this page: speed, SEO, security headers, SSL/DNS/email auth, forms, tracking, and brand, delivered as a report with severity', market: 'Focused/basic audit $300–$800', price: '$495' },
+        { name: 'Audit + Fix Plan', includes: 'Site Check plus a prioritized task list with owners and effort, a 45-minute walkthrough call, and a form/spam deliverability test', market: 'Comprehensive small-business audit $750–$1,500', price: '$895 (recommended)' },
+        { name: 'Audit + Implementation', includes: 'Audit + Fix Plan plus up to 10 hours of fixes (images, SEO cleanup, redirects, headers, form, tracking) and a re-test', market: 'Audit $750–$1,500 plus remediation billed separately', price: 'From $1,895' }
+      ] },
+      { id: 'price-credit', group: 'Selling this audit: pricing', title: 'Credit the full audit fee toward any OTV build or care plan booked within 30 days.', owner: 'Cory', effort: 'Not specified', needs: 'Cory decision', context: 'Pricing recommendation, not a decided policy. The full audit fee would be credited toward any OTV build or care plan booked within 30 days.' },
+      { id: 'price-woo', group: 'Selling this audit: pricing', title: 'Add $300 for WooCommerce stores (Staunton Storm is the example).', owner: 'Cory', effort: 'Not specified', needs: 'Cory decision', context: 'Pricing recommendation, not a decided rate. WooCommerce stores take more audit work; Staunton Storm is the example.' },
+      {"id": "mkt-goal", "group": "Marketing plan (Nova)", "title": "Build toward $10,000/month revenue by combining projects and social retainers.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision", "context": "From an approximate $1,800–$2,000/month current run rate. This is a goal, not a forecast. Cory Crawford owns decisions/calls."},
+      {"id": "mkt-audience", "group": "Marketing plan (Nova)", "title": "Target Shenandoah Valley small businesses, nonprofits, creators, HVAC companies, and health practices.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision", "context": "Positioning: “Creative work and systems that turn content into customers.”"},
+      {"id": "mkt-fix-first", "group": "Marketing plan (Nova)", "title": "Repair the site before promotion (CTA/booking, speed, legacy pages, tracking, and brand).", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Eight homepage CTAs return 404; only info@otv.agency works. No real site-form leads in 90 days. Prerequisites: CTA/booking (Forge+Nova) — build companion flow and verify WPForms #1503 delivery to cory@otv.agency (PR #37 fallback is preview only); Speed (Forge) — reduce huge hero images/6 MB page and remeasure the 26-second mobile LCP; Legacy pages (Forge+Nova) — review redirects from indexed “On The Verge Marketing” pages; Tracking (Forge+Nova) — choose GA4/HubSpot and test form, qualified, and booking events (HubSpot has no conversion event; GA4/Meta pixel absent); Brand (Pixel+Forge) — launch Slate Lagoon B, approved November 8, after Cory's launch approval. Related audit tasks: 1, 4, 6, 8, 11. Choice for notes: GA4 or HubSpot, prerequisite scope, and brand-launch conditions."},
+      {"id": "mkt-offer-audit", "group": "Marketing plan (Nova)", "title": "Lead marketing with Audit + Fix Plan at $895 as the front-door offer.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision", "context": "Recommended; undecided. Answers November 11 Alignable SEO/optimization demand. Alternatives: Site Check $495; Audit + Implementation $1,895+. Same recommendation as price-tier in the audit pricing section. Choice for notes: $895 Audit + Fix Plan, $495 Site Check, or Audit + Implementation from $1,895."},
+      {"id": "mkt-offer-landing", "group": "Marketing plan (Nova)", "title": "Keep the landing page at $500 (current internal) as a focused entry project.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision", "context": "From the offers table in the marketing plan."},
+      {"id": "mkt-offer-starter", "group": "Marketing plan (Nova)", "title": "Keep Website Starter at $1,500+ (current public) as the core website offer.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision", "context": "From the offers table in the marketing plan."},
+      {"id": "mkt-offer-social", "group": "Marketing plan (Nova)", "title": "Plan social retainers in a $300–$600/month range and reconcile internal vs public pricing.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision", "context": "Internal prices are $300/$500 monthly; the public price is $600+ monthly. Recommendation: $300–$600/month planning range; reconcile scope. Choice for notes: monthly prices and the scope included at each price."},
+      {"id": "mkt-pricing-align", "group": "Marketing plan (Nova)", "title": "Reconcile public/internal pricing and the “$500 off” bundle base.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision", "context": "Related to task-13b (whether to keep the $500 new-client offer). The current “$500 off” bundle offer has no base price. Choice for notes: aligned public/internal prices, bundle base price, and keep or drop the $500 offer."},
+      {"id": "mkt-escalate", "group": "Marketing plan (Nova)", "title": "Escalate custom pricing, multi-phase work, and projects over $1,500 to Cory.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision", "context": "From the marketing plan offers section. The booking flow also independently escalates these, and flags qualified requests over $5,000 for Cory."},
+      {"id": "mkt-channels", "group": "Marketing plan (Nova)", "title": "Lead with organic channels: Google Business Profile/reviews; Alignable and referral partners; Staunton/Augusta chamber-type networking; LinkedIn and Instagram/Facebook case studies; and a permission-based past-client/lead newsletter.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Chamber groups are unverified. The newsletter must be permission-based. Outreach, posting, ads, sending, and publishing remain held until approved. Choice for notes: which channels to prioritize."},
+      {"id": "mkt-paid-test", "group": "Marketing plan (Nova)", "title": "Optional $150–$300/month paid test after booking and tracking work is in place.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Suggestion only. Spending is unapproved. Setup and creative are unpriced. Also listed in the budget table. Choice for notes: whether to run the test and the proposed monthly media budget."},
+      {"id": "mkt-rollout", "group": "Marketing plan (Nova)", "title": "Approve the six-week rollout starting Nov 16, 2026, with lighter holiday weeks and Staunton Storm capacity protected.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Recommended; approval required. Verge protects parallel Staunton Storm capacity. Weeks: Nov 16–22 Repair — approve offers/rules; fix CTAs, speed, brand; test routing (Cory, Forge, Pixel, Nova). Nov 23–29 Thanksgiving prep — test tracking; stage profile/review and case-study drafts (Forge, Nova, Quill, Pixel). Nov 30–Dec 6 Introduce audit — release approved offer/posts; begin approved referrals/networking (Nova, Quill, Cory). Dec 7–13 Build trust — before/after posts, newsletter; optional approved paid test (Pixel, Quill, Nova). Dec 14–20 Follow through — review leads; approved replies; confirm January availability (Vera, Nova, Cory). Dec 21–27 Holiday review — light promotion; review revenue; plan January around Storm (Nova, Ledger, Verge, Cory).", "table": {"caption": "Six-week rollout · recommended; approval required", "columns": ["Week", "Focus", "Actions", "Owner"], "rows": [["Nov 16–22", "Repair", "Approve offers/rules; fix CTAs, speed, brand; test routing.", "Cory, Forge, Pixel, Nova"], ["Nov 23–29", "Thanksgiving prep", "Test tracking; stage profile/review and case-study drafts.", "Forge, Nova, Quill, Pixel"], ["Nov 30–Dec 6", "Introduce audit", "Release approved offer/posts; begin approved referrals/networking.", "Nova, Quill, Cory"], ["Dec 7–13", "Build trust", "Before/after posts, newsletter; optional approved paid test.", "Pixel, Quill, Nova"], ["Dec 14–20", "Follow through", "Review leads; approved replies; confirm January availability.", "Vera, Nova, Cory"], ["Dec 21–27", "Holiday review", "Light promotion; review revenue; plan January around Storm.", "Nova, Ledger, Verge, Cory"]]}},
+      {"id": "mkt-content", "group": "Marketing plan (Nova)", "title": "Produce six case-study posts (LKB, Jennifer Eddings, Friendly City, Love Forward, Staunton Storm, teamee88) with verified scope, approved assets, and a CTA.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision", "context": "Repurpose into before/after posts. Audit teardowns require client permission. Only supplied testimonial: Norman Harris. Invent no results or review counts. Gauge researches; Pixel/Quill create."},
+      {"id": "mkt-kpis", "group": "Marketing plan (Nova)", "title": "Review monthly KPIs: visits, qualified form completions, booked calls, show rate, close rate, and revenue.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision", "context": "Nova reviews monthly. Show rate = attended/booked calls; close rate = won/qualified opportunities for a consistent cohort. Baseline first, then set targets. Ledger verifies collected revenue. Use the companion qualification rules."},
+      {"id": "mkt-budget", "group": "Marketing plan (Nova)", "title": "Treat the marketing budget figures as planning estimates only; no spending is approved yet.", "owner": "Nova (recommendation) / Cory decides", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Organic content/referrals: $0 media, labor unpriced. Site/brand/tracking: Forge scope/labor estimate pending. Form/scheduler/automation: $0 if existing/free features suffice; licenses unverified. Newsletter: $0 within existing allowance; otherwise quote. Optional paid test: $150–$300/month media; setup/creative unpriced. Networking: dues/event fees unconfirmed. Ledger verifies costs. Choice for notes: proposed budget limits and any costs that need a quote.", "table": {"caption": "Planning estimates only · spending unapproved", "columns": ["Item", "Estimated incremental cost"], "rows": [["Organic content/referrals", "$0 media; labor unpriced"], ["Site/brand/tracking", "Forge scope/labor estimate pending"], ["Form/scheduler/automation", "$0 if existing/free features suffice; licenses unverified"], ["Newsletter", "$0 within existing allowance; otherwise quote"], ["Optional paid test", "$150–$300/month media; setup/creative unpriced"], ["Networking", "Dues/event fees unconfirmed"]]}},
+      {"id": "book-placement", "group": "Qualified-lead booking flow (Nova)", "title": "Approve placing the booking flow near the top of the homepage, replacing the 8 broken CTAs.", "owner": "Nova (recommendation) · Pixel (design) · Forge (build)", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Nova recommendation: place a short qualifier near the top of the homepage. A “Book a call” button opens the four-question form; point all eight broken homepage CTAs to this working module. Suggested introduction: “Tell us a little about your project so we can point you to the right next step.” Retain info@otv.agency as a visible contact fallback. Pixel designs a clear, mobile-friendly module and result states. Pixel's CTAs use a [QUALIFY_FORM_URL] placeholder for now. Related to task-01.", "openQuestion": true},
+      {"id": "book-questions", "group": "Qualified-lead booking flow (Nova)", "title": "Use the four qualifier questions, with call type and phone collected on the Google booking form.", "owner": "Nova (questions) · Cory decides → Forge", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Q1. What can we help with? Website / Landing page / Branding / Social media management / Video / Website audit / Other. Q2. What budget are you planning? Under $500 / $500–$1,000 / $1,000–$3,000 / $3,000–$5,000 / $5,000+ / Monthly: under $300 / $300–$600 / $600+. Q3. When would you like to start? ASAP within 2 weeks / within 30 days / 1–3 months / just exploring. Q4. Tell us about your business. Business name; website (allow “no website yet”); email; phone optional; one-line goal. Q5 in the qualifier table: How would you like to meet? Video (Google Meet) / Phone call. On the Google booking form, call type is a required question (“Video (Google Meet) or phone call?”) and the phone number field is required; Cory calls phone bookings at that number. Show monthly budget choices for social retainers and project choices for one-time work. Use distinct internal option IDs because displayed ranges share endpoints; clarify ambiguous exact budgets before promising scope. A required email supports the inquiry reply; newsletter subscription should be a separate, optional choice. Don't repeat the qualifier on the booking form (name and email are default, plus phone and call type).", "table": {"caption": "Four-step qualifier · call type and phone required on Google booking form", "columns": ["Question / location", "Answer options / fields"], "rows": [["Q1. What can we help with?", "Website / Landing page / Branding / Social media management / Video / Website audit / Other"], ["Q2. What budget are you planning?", "Under $500 / $500–$1,000 / $1,000–$3,000 / $3,000–$5,000 / $5,000+ / Monthly: under $300 / $300–$600 / $600+"], ["Q3. When would you like to start?", "ASAP within 2 weeks / within 30 days / 1–3 months / just exploring"], ["Q4. Tell us about your business.", "Business name; website (allow “no website yet”); required email; optional phone; one-line goal."], ["Q5 in source table / required on Google booking form", "Video (Google Meet) or phone call? Required phone number; Cory calls phone bookings at that number. Name and email are default; do not repeat the qualifier."]]}},
+      {"id": "book-routes", "group": "Qualified-lead booking flow (Nova)", "title": "Route leads as QUALIFIED, NEAR-FIT, NOT YET, or QUALIFIED + CORY FLAG, with a $1,000 minimum to book.", "owner": "Nova (recommendation) · Vera (scope review) · Cory decides → Forge", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Cory's pick (Nov 14): minimum budget to book is $1,000. Still needs APPROVED to implement. Rules for routing, not approved pricing or a promise of availability. All qualified leads must request an offered service and a start within three months. “Other” requires Vera's scope review. QUALIFIED: budget $1,000+ (Cory's minimum) and a start within 3 months — show the Google Calendar booking link ([BOOKING_URL]) for a 30-minute discovery call, video (Google Meet) or phone. Only QUALIFIED $1,000+ leads who want to start within 3 months see [BOOKING_URL]. NEAR-FIT: $500–$1,000, a $500 landing-page request, an audit request, or a monthly retainer — no booking link; show the landing-page and audit options; Vera confirms scope and can offer booking only if the confirmed budget reaches $1,000. NOT YET: under $500, just exploring, or an out-of-scope request — no booking link; show a warm thank-you/resources page; queue an approved reply and consent-based nurture. QUALIFIED + CORY FLAG: qualified request over $5,000 or multi-phase — show discovery booking and flag Cory for scope/pricing review. Apply exclusions first: an out-of-scope request or “just exploring” does not qualify just because the budget is high. ASAP is a requested start, not guaranteed delivery. The $500–$1,000 range starts as NEAR-FIT; if Vera confirms a $1,000+ budget, it qualifies. Escalate all projects over $1,500, custom pricing, and multi-phase work to Cory, including qualified requests under $5,000. Booking a call does not approve a quote.", "table": {"caption": "Proposed routing · Cory’s $1,000 minimum still needs APPROVED", "columns": ["Route", "Threshold / review", "Result"], "rows": [["QUALIFIED", "$1,000+ budget, offered service, start within 3 months; “Other” needs Vera’s scope review", "Show Google Calendar [BOOKING_URL] for a 30-minute discovery call, video (Google Meet) or phone."], ["NEAR-FIT", "$500–$1,000, a $500 landing-page request, an audit request, or a monthly retainer", "No booking link. Show landing-page and audit options; Vera reviews scope and can offer booking only if the confirmed budget reaches $1,000."], ["NOT YET", "Under $500, just exploring, or an out-of-scope request; apply exclusions first", "No booking link. Warm thank-you/resources page; queue an approved reply and consent-based nurture."], ["QUALIFIED + CORY FLAG", "Qualified request over $5,000 or multi-phase", "Show discovery [BOOKING_URL] and flag Cory for scope/pricing review. Independently escalate all projects over $1,500, custom pricing, and multi-phase work."]]}},
+      {"id": "book-under-1k", "group": "Qualified-lead booking flow (Nova)", "title": "Decision: booking for offers under the $1,000 minimum", "owner": "Cory decides · Nova recommends · Vera reviews", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Should the $895 Audit + Fix Plan and $300–$600/mo social retainers get the booking link, or go to Vera first?", "openQuestion": true, "options": [
+        {"n": 1, "recommended": true, "label": "Option 1 (Nova recommends)", "text": "Route to Vera. No booking link; Vera confirms scope and offers a call only if the confirmed budget reaches $1,000. Protects Cory's 10–4 weekday calendar."},
+        {"n": 2, "label": "Option 2", "text": "An accepted $895 audit unlocks booking."},
+        {"n": 3, "label": "Option 3", "text": "Retainers of $350+/mo with a 3-month commitment unlock booking."},
+        {"n": 4, "label": "Option 4", "text": "Both 2 and 3."}
+      ]},
+      {"id": "book-nearfit-vera", "group": "Qualified-lead booking flow (Nova)", "title": "Send $500–$1,000 projects, $500 landing-page requests, audit requests, and monthly retainers through Vera for scope review before any booking link.", "owner": "Vera (scope review) · Cory approves replies", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Recommended near-fit approach, updated for the $1,000 minimum. Vera can offer booking only if the confirmed budget reaches $1,000. A $500 project may fit a focused landing page but not a broader website. Review protects Cory's calendar and lets Vera explain the relevant offer. Suggested result copy: “Thanks for sharing your project. A focused landing page or website audit may be a good next step. We'll review your goals and follow up.” Replies remain drafts until approved."},
+      {"id": "book-scheduler", "group": "Qualified-lead booking flow (Nova)", "title": "Set up one 30-minute “OTV Discovery Call” Google Calendar appointment schedule on cory@otv.agency.", "owner": "Cory creates after APPROVED · Forge (wiring)", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Cory's pick (Nov 14) — still needs APPROVED to set up. The booking page is not created yet. Scheduler is the free Google Calendar appointment schedule on cory@otv.agency, not Calendly. Availability: Mon–Fri, 10:00 AM–4:00 PM America/New_York. Check the connected calendar for conflicts so busy times are hidden. Location: Google Meet video conferencing, with a required booking-form question “Video (Google Meet) or phone call?” and a required phone number field. Alternative: two schedules (Video / Phone) if Cory prefers; recommendation: one schedule keeps it simple. The qualified result shows the placeholder [BOOKING_URL] until Cory creates the schedule after APPROVED. Google's booking page does not take URL prefill, so the qualifier keeps the full lead record, including hidden UTM fields, and the booking itself collects only the basics. Hiding the link is a convenience, not security: anyone with a shared link can book. Keep the lead even if scheduling fails, and show info@otv.agency as a fallback."},
+      {"id": "book-buffer", "group": "Qualified-lead booking flow (Nova)", "title": "Confirm a 15-minute buffer between calls.", "owner": "Cory", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Recommended setting from section 4, for Cory to confirm. Feature may depend on the Google Workspace plan (see book-workspace-features)."},
+      {"id": "book-notice", "group": "Qualified-lead booking flow (Nova)", "title": "Confirm at least 24 hours' notice to book.", "owner": "Cory", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Recommended setting from section 4, for Cory to confirm. Feature may depend on the Google Workspace plan."},
+      {"id": "book-max-daily", "group": "Qualified-lead booking flow (Nova)", "title": "Confirm a maximum of 3 bookings a day.", "owner": "Cory", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Recommended setting from section 4, for Cory to confirm. Feature may depend on the Google Workspace plan."},
+      {"id": "book-window", "group": "Qualified-lead booking flow (Nova)", "title": "Confirm that bookings may be made up to 30 days out.", "owner": "Cory", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Recommended setting from section 4, for Cory to confirm."},
+      {"id": "book-workspace-features", "group": "Qualified-lead booking flow (Nova)", "title": "Verify that the Google Workspace plan on cory@otv.agency includes buffers, daily limits, booking-form questions, and reminders before building.", "owner": "Forge, after Cory’s APPROVED to set up the schedule", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Some appointment schedule features depend on the plan. Forge verifies on cory@otv.agency before building."},
+      {"id": "book-confirmations", "group": "Qualified-lead booking flow (Nova)", "title": "Use Google's built-in booking confirmation and reminder emails, with wording reviewed by Cory before go-live.", "owner": "Cory reviews wording · Forge/Cory configure after APPROVED", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Enable them only after Cory reviews the wording. No test notifications to clients."},
+      {"id": "book-form-tool", "group": "Qualified-lead booking flow (Nova)", "title": "Which form tool should Forge use for the qualifier: WPForms #1503 or JotForm?", "owner": "Cory decides → Forge", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Open question. The qualifier (WPForms #1503 or JotForm conditional logic) shows the booking link only on the QUALIFIED result screen, and all homepage CTAs point to the qualifier ([QUALIFY_FORM_URL]). Forge should evaluate existing WPForms #1503, which delivers to cory@otv.agency, and PR #37's preview-only fallback before choosing the build path. Choice for notes: WPForms #1503 or JotForm.", "openQuestion": true},
+      {"id": "book-intake", "group": "Qualified-lead booking flow (Nova)", "title": "Create a ClickUp Lead Intake task and an inquiry email to cory@otv.agency for every valid submission.", "owner": "Forge, after Cory approval", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "To be built with Zapier/Make or a WPForms webhook and an appropriate integration endpoint. Forge must verify licenses, access, and costs before selecting the connector. Do not assume a direct webhook alone completes the ClickUp integration. Recommended task fields: business/contact details, project type, budget, timeline, goal, route/reason, UTM source, consent choice, scheduler status, and Cory escalation flag. Deduplicate retries with a submission ID. Forge verifies task/email delivery with local or non-sending checks; failures should enter a retry/review queue. A submitted form is a lead even without a booking. Automation activation and client notifications remain held."},
+      {"id": "book-nurture", "group": "Qualified-lead booking flow (Nova)", "title": "After permission, send a three-email nurture over two weeks (Day 0, Day 7, Day 14).", "owner": "Nova + Quill (copy) · Vera (recipient-specific drafts) · Cory approves", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Only after permission and message/recipient approval; include unsubscribe controls for marketing. Day 0: thank the lead, share one relevant resource, and explain their route. Day 7: share a relevant approved case study and practical tip. Day 14: explain the approved audit or landing-page option. Use only relevant offers for out-of-scope leads. An inquiry alone does not enroll someone in a newsletter. Nova and Quill prepare copy; Vera prepares recipient-specific drafts. No outreach or sending is authorized until a later approval covers the exact message and named recipient.", "table": {"caption": "Nurture outline · permission and message/recipient approval required", "columns": ["Timing", "Draft purpose", "Suggested next step"], "rows": [["Day 0", "Thank the lead; share one relevant resource and explain their route", "Reply with a question or clearer scope"], ["Day 7", "Share a relevant approved case study and practical tip", "Identify the main website/content obstacle"], ["Day 14", "Explain the approved audit or landing-page option", "Reply when ready; optionally join the monthly newsletter"]]}},
+      {"id": "book-tracking", "group": "Qualified-lead booking flow (Nova)", "title": "Track form_submit, qualified, and booking_scheduled events, with GA4 or HubSpot as the primary funnel record.", "owner": "Forge implements · Nova validates and reviews monthly · Cory decides", "effort": "Not specified", "needs": "Cory decision + APPROVED", "context": "Related to task-11 (pick GA4 or HubSpot as the source of truth). HubSpot currently loads without a conversion event. form_submit: fire when the server accepts a valid submission; one event per submission ID, not a button click. qualified: fire when rules assign QUALIFIED, including Cory-flagged leads; record rule version and non-personal route metadata. booking_scheduled: fire when the scheduler confirms a completed booking; use a supported callback/webhook or verified confirmation integration; a link click alone is insufficient. Keep tracking free of personal details; respect applicable consent settings. Preserve UTM attribution in the lead record. Google's booking page does not take URL prefill, so the qualifier—not the booking page—keeps hidden UTM fields and the full lead record. Reconcile events with ClickUp submissions/bookings and track cancellations separately. Nova reviews funnel performance monthly.", "table": {"caption": "Funnel events · verify accepted submissions and confirmed bookings", "columns": ["Event", "Fire when", "Verification"], "rows": [["form_submit", "Server accepts a valid submission", "One event per submission ID, not button click"], ["qualified", "Rules assign QUALIFIED, including Cory-flagged leads", "Record rule version and non-personal route metadata"], ["booking_scheduled", "Scheduler confirms a completed booking", "Use a supported callback/webhook or verified confirmation integration; link click alone is insufficient"]]}}
+    ];
+
+    // Group metadata controls presentation; all voteable decisions stay in ITEMS.
+    const GROUPS = [
+      {
+        "name": "Task list",
+        "description": "Effort is hands-on time. Parts of tasks 1, 4, 5, and 8 are already built in PR #37, preview only. Task 13 is split into two separate decisions."
+      },
+      {
+        "name": "Selling this audit: pricing",
+        "description": "Recommendations for selling this audit. These are not decided rates."
+      },
+      {
+        "name": "Marketing plan (Nova)",
+        "parent": "Homepage, landing pages & marketing plan (Pixel + Nova)",
+        "description": "Nova’s marketing recommendations. Goals, offers, rollout, and budget remain decisions for Cory."
+      },
+      {
+        "name": "Qualified-lead booking flow (Nova)",
+        "parent": "Homepage, landing pages & marketing plan (Pixel + Nova)",
+        "description": "Cory picked the scheduler, call types, hours, and $1,000 minimum on Nov 14, 2026 (4:18 PM ET). Those picks still need APPROVED on this page before Forge/Cory create the Google Calendar appointment schedule. The booking page is not created yet. No forms, booking pages, integrations, or messages have been activated."
+      },
+      {
+        "name": "Coming soon: Homepage & landing pages (Pixel)",
+        "parent": "Homepage, landing pages & marketing plan (Pixel + Nova)",
+        "empty": "No homepage or landing-page design decisions added yet. Pixel’s homepage and landing-page items will appear here when ready for review. Pixel’s CTAs use a [QUALIFY_FORM_URL] placeholder for now, and the qualified-only scheduler link stays [BOOKING_URL] until Cory creates the Google Calendar appointment schedule after APPROVED."
+      }
+    ];
+  </script>
+  <style>
+    :root { color-scheme: light; --dark:#111d24; --accent:#3fbfd2; --paper:#f5f2ec; --ink:#135a66; --muted:#52616a; --line:#d8dedb; --danger:#9b352f; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--dark); font:16px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    button,input,textarea { font:inherit; }
+    button { cursor:pointer; }
+    :focus-visible { outline:3px solid var(--ink); outline-offset:4px; }
+    .wrap { width:min(1120px,calc(100% - 48px)); margin-inline:auto; }
+    .preview { background:var(--accent); color:var(--dark); padding:12px 0; font-size:13px; line-height:1.5; }
+    .preview strong { letter-spacing:.07em; font-size:11px; margin-right:12px; }
+    header { background:var(--dark); color:var(--paper); padding:40px 0 44px; }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:750; letter-spacing:.09em; font-size:13px; }
+    .mark { display:inline-grid; place-items:center; width:42px; height:42px; border:1px solid var(--accent); color:var(--accent); font-size:12px; letter-spacing:-.04em; border-radius:12px; }
+    .eyebrow { color:var(--accent); font-size:12px; letter-spacing:.14em; text-transform:uppercase; margin:32px 0 8px; font-weight:700; }
+    h1 { font-size:clamp(34px,5vw,56px); letter-spacing:-.045em; line-height:1.08; margin:0 0 18px; max-width:800px; }
+    .intro { max-width:730px; color:#c4d2d7; margin:0; font-size:17px; }
+    .header-meta { margin:24px 0 0; color:#c4d2d7; font-size:13px; }
+    main { padding-bottom:48px; }
+    .overview { padding:30px 0 22px; }
+    .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    .metric { border:1px solid var(--line); border-radius:12px; padding:18px; background:#fffdf9; }
+    .metric b { display:block; color:var(--ink); font-size:26px; letter-spacing:-.04em; line-height:1.2; }
+    .metric span { font-size:12px; color:var(--muted); }
+    details { margin-top:16px; padding:15px 18px; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
+    summary { cursor:pointer; font-size:14px; font-weight:650; }
+    .readonly { color:var(--muted); font-size:12px; font-weight:400; margin-left:8px; }
+    details ol { padding-left:22px; font-size:14px; color:var(--muted); }
+    details li + li { margin-top:8px; }
+    .toolbar { position:sticky; top:0; z-index:3; background:var(--paper); border-bottom:1px solid #c8d2d0; padding:16px 0; box-shadow:0 5px 12px #111d2408; }
+    .toolbar-inner { display:flex; justify-content:space-between; align-items:center; gap:20px; }
+    #progress { font-weight:750; font-size:16px; }
+    .save { display:block; font-size:12px; color:var(--muted); max-width:440px; }
+    progress { display:block; margin-top:7px; width:210px; height:5px; accent-color:var(--ink); border:0; }
+    progress::-webkit-progress-bar { background:var(--line); border-radius:5px; }
+    progress::-webkit-progress-value { background:var(--ink); border-radius:5px; }
+    .actions { display:flex; gap:8px; flex-shrink:0; }
+    button { border:1px solid #becbc9; border-radius:8px; padding:10px 16px; background:transparent; color:var(--dark); font-size:13px; font-weight:650; min-height:44px; }
+    button:hover { background:#e5ebe7; }
+    .primary { background:var(--ink); border-color:var(--ink); color:white; }
+    .primary:hover { background:#0e4751; }
+    .reset { border-color:transparent; color:var(--muted); }
+    #notice { margin:0; font-size:13px; color:var(--ink); }
+    #notice:not(:empty) { padding-top:12px; }
+    html { scroll-padding-top:170px; }
+    .group { padding-top:38px; scroll-margin-top:170px; }
+    .group-parent, .group-head, .group-title, h2, h3, h4 { scroll-margin-top:170px; }
+    .group-head { display:flex; gap:14px; align-items:baseline; margin-bottom:18px; }
+    .group-number { font-size:12px; color:var(--ink); font-weight:750; }
+    h2 { font-size:24px; letter-spacing:-.035em; line-height:1.25; margin:0; }
+    .group-parent { padding-top:38px; }
+    .group-parent > .group { padding-top:28px; }
+    .group-title { font-size:24px; letter-spacing:-.035em; line-height:1.25; margin:0; }
+    .open-question { color:var(--ink); font-size:12px; font-weight:700; margin:16px 0 0; }
+    .option-list { margin:12px 0 20px; padding:0; list-style:none; display:grid; gap:10px; }
+    .option-list li { border:1px solid var(--line); border-radius:10px; padding:12px 14px; background:#fffdf9; font-size:14px; color:var(--muted); }
+    .option-list strong { display:block; color:var(--ink); font-size:13px; margin-bottom:3px; }
+    .options-picker { margin:0 0 16px; }
+    .options-picker[hidden] { display:none; }
+    .options-picker .choices { flex-wrap:wrap; }
+    .options-picker .choice { flex:1 1 160px; }
+    .missing-notes .options-picker .choice label { border-color:var(--danger); }
+    .decision-table td:first-child,.decision-table td:last-child { width:auto; }
+    .decision-table td:last-child { font-weight:400; color:inherit; }
+    .group-description { color:var(--muted); font-size:14px; margin:-5px 0 22px 32px; }
+    .card { background:#fffdf9; border:1px solid var(--line); border-radius:14px; padding:26px; margin-bottom:16px; scroll-margin-top:155px; }
+    .card-top { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .item-id { font:600 12px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace; color:var(--ink); }
+    .answer-status { font-size:11px; letter-spacing:.06em; color:var(--muted); font-weight:700; }
+    .card[data-choice="APPROVED"] .answer-status { color:var(--ink); }
+    .card[data-choice="REJECTED"] .answer-status { color:var(--danger); }
+    h3,h4 { font-size:18px; line-height:1.5; letter-spacing:-.015em; margin:0 0 16px; overflow-wrap:anywhere; }
+    dl { display:grid; grid-template-columns:1.2fr 1fr 1.2fr; gap:16px; margin:0; padding:14px 0; border-block:1px solid #e5e8e2; }
+    dt { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.1em; margin-bottom:3px; }
+    dd { margin:0; font-size:13px; font-weight:550; overflow-wrap:anywhere; }
+    .context { font-size:14px; color:var(--muted); margin:16px 0 20px; overflow-wrap:anywhere; }
+    .response { border-top:1px solid #e5e8e2; padding-top:18px; }
+    fieldset { border:0; padding:0; margin:0 0 16px; }
+    legend,.notes-label { font-size:12px; font-weight:700; display:block; margin-bottom:9px; }
+    .choices { display:flex; gap:8px; }
+    .choice { flex:0 1 160px; }
+    .choice label { display:flex; align-items:center; gap:9px; padding:11px 12px; border:1px solid #becbc9; border-radius:8px; cursor:pointer; font-size:12px; font-weight:700; min-height:46px; }
+    .choice label:has(input:checked) { background:#e1f1ef; border-color:var(--ink); color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
+    input[type="radio"] { width:16px; height:16px; accent-color:var(--ink); margin:0; flex-shrink:0; }
+    textarea { width:100%; display:block; resize:vertical; min-height:86px; border:1px solid #becbc9; border-radius:8px; background:white; padding:12px; font-size:14px; color:var(--dark); }
+    textarea::placeholder { color:#68757b; }
+    .notes-label span { font-weight:400; color:var(--muted); }
+    .hint { color:var(--ink); font-size:12px; margin:7px 0 0; }
+    .hint[hidden] { display:none; }
+    .missing-notes { border-color:var(--danger); }
+    .missing-notes textarea { border-color:var(--danger); }
+    .missing-notes .hint { color:var(--danger); font-weight:600; }
+    .table-scroll { overflow-x:auto; margin:0 0 20px; border:1px solid var(--line); border-radius:9px; }
+    table { width:100%; min-width:650px; border-collapse:collapse; font-size:12px; line-height:1.55; }
+    caption { text-align:left; padding:13px; background:#eef2ed; font-weight:700; font-size:13px; }
+    th,td { text-align:left; vertical-align:top; padding:13px; border-top:1px solid var(--line); }
+    th { font-weight:700; color:var(--ink); }
+    td:first-child { font-weight:650; width:18%; }
+    td:last-child { font-weight:750; width:17%; color:var(--ink); }
+    .empty { border:1px dashed #a8bab8; border-radius:14px; padding:26px; color:var(--muted); font-size:14px; }
+    .empty strong { display:block; color:var(--ink); margin-bottom:5px; }
+    footer { margin-top:38px; padding-top:20px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); }
+    noscript p { padding:20px; border:2px solid var(--danger); }
+    @media (max-width:650px) {
+      html { scroll-padding-top:210px; }
+      .group, .group-parent, .group-head, .group-title, h2, h3, h4, .card { scroll-margin-top:210px; }
+      .wrap { width:calc(100% - 32px); }
+      header { padding:26px 0 30px; }
+      .preview strong { display:block; margin-bottom:3px; }
+      .eyebrow { margin-top:26px; }
+      .intro { font-size:15px; }
+      .metrics { grid-template-columns:repeat(2,1fr); gap:8px; }
+      .metric { padding:14px; }
+      .toolbar { padding:12px 0; }
+      .toolbar-inner { flex-direction:column; align-items:stretch; gap:12px; }
+      .progress-row { display:flex; justify-content:space-between; gap:10px; align-items:center; }
+      progress { width:100%; max-width:110px; margin:0; }
+      .actions button { flex:1; padding:10px 9px; }
+      .card { padding:18px; }
+      h2,.group-title { font-size:22px; }
+      h3,h4 { font-size:16px; }
+      dl { grid-template-columns:1fr 1fr; gap:12px; }
+      dl > div:last-child { grid-column:1 / -1; }
+      .choices { gap:6px; flex-wrap:wrap; }
+      .choice { flex:1; min-width:0; }
+      .choice label { padding:10px 7px; gap:6px; font-size:10px; }
+      .group-description { margin-left:0; }
+    }
+    @media print {
+      .toolbar { position:static; }
+      .actions { display:none; }
+      .card { break-inside:avoid; }
+      details { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="preview"><div class="wrap"><strong>PREVIEW DECISION PAGE</strong> Nothing goes live from this page. Approvals recorded here are answers for the team, not a live deploy.</div></div>
+  <header>
+    <div class="wrap">
+      <div class="brand"><span class="mark" aria-hidden="true">OTV</span> OTV AGENCY <span aria-hidden="true">/</span> SITE AUDIT</div>
+      <p class="eyebrow">Cory Crawford · Decision review</p>
+      <h1>A clearer path forward.<br>One decision at a time.</h1>
+      <p class="intro">Review the audit tasks, pricing recommendations, marketing plan, and qualified-lead booking flow. Approve, request changes, or reject each item, then copy or export your answers for the team.</p>
+      <p class="header-meta">Audit: November 14, 2026 ET · otv.agency · Read-only audit</p>
+    </div>
+  </header>
+  <main>
+    <section class="overview wrap" aria-label="Read-only audit context">
+      <div class="metrics">
+        <div class="metric"><b>58<span>/100</span></b><span>Overall · audit judgment</span></div>
+        <div class="metric"><b>0<span> of 8</span></b><span>Working homepage CTAs</span></div>
+        <div class="metric"><b>61<span>/100</span></b><span>Mobile performance</span></div>
+        <div class="metric"><b>26<span> seconds</span></b><span>Mobile LCP · 5.99 MB page</span></div>
+      </div>
+      <details>
+        <summary>Top 5 audit issues <span class="readonly">Context only · no vote needed</span></summary>
+        <ol>
+          <li>Every homepage CTA goes to a 404 (/?page_id=1523 is an unpublished Intake page). Visitors cannot reach a form.</li>
+          <li>Mobile load is very slow: LCP 26 s, driven by a 2.6 MB hero photo and a 1.8 MB about photo.</li>
+          <li>Old “On The Verge Marketing” pages, emails, and naming are still indexed: home-2/about-2/services-2/contact-2, the shop, “My WordPress” in the schema, and @onthevergemarketing.com on the contact pages.</li>
+          <li>The approved Slate Lagoon B branding is not live; the site still runs the September cyan palette.</li>
+          <li>No conversion tracking or social preview image. HubSpot loads but nothing measures leads, and shared links show no image.</li>
+        </ol>
+      </details>
+    </section>
+    <div class="toolbar">
+      <div class="wrap">
+        <div class="toolbar-inner">
+          <div>
+            <div class="progress-row"><div id="progress" role="status" aria-live="polite">0 answered</div><progress id="progress-bar" max="1" value="0" aria-label="Answered decisions"></progress></div>
+            <span class="save" id="save-status">Answers autosave in this browser. Export to share or keep a backup.</span>
+          </div>
+          <div class="actions" aria-label="Answer actions">
+            <button class="primary" id="copy" type="button">Copy answers</button>
+            <button id="export" type="button">Export</button>
+            <button class="reset" id="reset" type="button">Reset</button>
+          </div>
+        </div>
+        <p id="notice" role="status" aria-live="polite"></p>
+      </div>
+    </div>
+    <div class="wrap">
+      <noscript><p>Enable JavaScript to view all decision cards, record answers, and copy or export them.</p></noscript>
+      <div id="groups"></div>
+      <footer>Owner key: Forge = web dev · Pixel = creative · Nova = marketing/booking · Cory = decisions.<br>“Needs” preserves the original audit’s approval requirements. Nothing here changes the live site, DNS, mailbox, billing, or any client site. Answers stay in this browser until you copy or export them.</footer>
+    </div>
+  </main>
+  <script>
+    'use strict';
+    const STORAGE_KEY = 'otv-audit-decisions-v1';
+    let answers = {};
+    let validationShown = false;
+    let storageAvailable = true;
+    const $ = (id) => document.getElementById(id);
+
+    // Accept only known IDs and choices when restoring browser data.
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+        for (const item of ITEMS) {
+          const entry = saved[item.id];
+          if (entry && typeof entry === 'object') {
+            answers[item.id] = {
+              choice: ['APPROVED', 'CHANGES', 'REJECTED'].includes(entry.choice) ? entry.choice : '',
+              notes: typeof entry.notes === 'string' ? entry.notes : '',
+              option: item.options && ['1', '2', '3', '4'].includes(String(entry.option)) ? String(entry.option) : '',
+              timestamp: typeof entry.timestamp === 'string' ? entry.timestamp : null
+            };
+          }
+        }
+      }
+    } catch (error) {
+      storageAvailable = false;
+      $('save-status').textContent = 'Browser storage is unavailable or unreadable. Copy or export to keep your answers.';
+    }
+
+    function element(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function buildPricingTable(item) {
+      const container = element('div', 'table-scroll');
+      container.tabIndex = 0;
+      container.setAttribute('role', 'region');
+      container.setAttribute('aria-label', 'Three pricing tiers; scroll horizontally on small screens');
+      const table = element('table');
+      table.append(element('caption', '', 'Three-tier recommendation · rates are not decided'));
+      const head = element('thead');
+      const headings = element('tr');
+      for (const title of ['Tier', "What’s included", 'Market reference', 'Recommended price']) {
+        const th = element('th', '', title);
+        th.scope = 'col';
+        headings.append(th);
+      }
+      head.append(headings);
+      table.append(head);
+      const body = element('tbody');
+      for (const tier of item.tiers) {
+        const row = element('tr');
+        for (const text of [tier.name, tier.includes, tier.market, tier.price]) row.append(element('td', '', text));
+        body.append(row);
+      }
+      table.append(body);
+      container.append(table);
+      return container;
+    }
+
+    // Source tables use textContent, like card copy, so notes and data never become HTML.
+    function buildDecisionTable(data) {
+      const container = element('div', 'table-scroll');
+      container.tabIndex = 0;
+      container.setAttribute('role', 'region');
+      container.setAttribute('aria-label', data.caption + '; scroll horizontally on small screens');
+      const table = element('table', 'decision-table');
+      table.append(element('caption', '', data.caption));
+      const head = element('thead');
+      const headings = element('tr');
+      for (const title of data.columns) {
+        const th = element('th', '', title);
+        th.scope = 'col';
+        headings.append(th);
+      }
+      head.append(headings);
+      const body = element('tbody');
+      for (const cells of data.rows) {
+        const row = element('tr');
+        for (const text of cells) row.append(element('td', '', text));
+        body.append(row);
+      }
+      table.append(head, body);
+      container.append(table);
+      return container;
+    }
+
+    function buildCard(item, headingTag = 'h3') {
+      const answer = answers[item.id] || {};
+      const card = element('article', 'card');
+      card.id = item.id;
+      card.setAttribute('aria-labelledby', item.id + '-title');
+      const top = element('div', 'card-top');
+      top.append(element('span', 'item-id', item.id));
+      const status = element('span', 'answer-status', answer.choice || 'UNANSWERED');
+      status.id = item.id + '-status';
+      top.append(status);
+      const title = element(headingTag, '', item.title);
+      title.id = item.id + '-title';
+      card.append(top, title);
+      const metadata = element('dl');
+      for (const [label, value] of [['Owner', item.owner], ['Effort', item.effort], ['Needs', item.needs]]) {
+        const pair = element('div');
+        pair.append(element('dt', '', label), element('dd', '', value));
+        metadata.append(pair);
+      }
+      card.append(metadata);
+      if (item.openQuestion) card.append(element('p', 'open-question', 'Open question · Cory decision pending'));
+      card.append(element('p', 'context', item.context));
+      if (item.options) {
+        const list = element('ol', 'option-list');
+        for (const option of item.options) {
+          const li = element('li');
+          li.append(element('strong', '', option.label), document.createTextNode(option.text));
+          list.append(li);
+        }
+        card.append(list);
+      }
+      if (item.tiers) card.append(buildPricingTable(item));
+      if (item.table) card.append(buildDecisionTable(item.table));
+      const response = element('div', 'response');
+      const fieldset = element('fieldset');
+      fieldset.append(element('legend', '', 'Your decision'));
+      fieldset.setAttribute('aria-describedby', item.id + '-title');
+      const choices = element('div', 'choices');
+      for (const choice of ['APPROVED', 'CHANGES', 'REJECTED']) {
+        const wrapper = element('div', 'choice');
+        const label = element('label');
+        const input = element('input');
+        input.type = 'radio';
+        input.name = item.id;
+        input.value = choice;
+        input.checked = answer.choice === choice;
+        input.addEventListener('change', () => updateAnswer(item.id, 'choice', choice));
+        label.append(input, document.createTextNode(choice));
+        wrapper.append(label);
+        choices.append(wrapper);
+      }
+      fieldset.append(choices);
+      if (item.options) {
+        const optionSet = element('fieldset', 'options-picker');
+        optionSet.id = item.id + '-options';
+        optionSet.append(element('legend', '', 'Which option are you approving?'));
+        const optionChoices = element('div', 'choices');
+        for (const option of item.options) {
+          const wrapper = element('div', 'choice');
+          const label = element('label');
+          const input = element('input');
+          input.type = 'radio';
+          input.name = item.id + '-option';
+          input.value = String(option.n);
+          input.checked = String(answer.option || '') === String(option.n);
+          input.addEventListener('change', () => updateAnswer(item.id, 'option', String(option.n)));
+          label.append(input, document.createTextNode(option.label));
+          wrapper.append(label);
+          optionChoices.append(wrapper);
+        }
+        optionSet.append(optionChoices);
+        const optionHint = element('p', 'hint', 'Please pick option 1, 2, 3, or 4 with APPROVED. Your decision is saved even without an option.');
+        optionHint.id = item.id + '-option-hint';
+        optionSet.append(optionHint);
+        response.append(fieldset, optionSet);
+      } else {
+        response.append(fieldset);
+      }
+      const notesLabel = element('label', 'notes-label', 'Notes ');
+      notesLabel.htmlFor = item.id + '-notes';
+      notesLabel.append(element('span', '', '· add your pick, changes, or reason'));
+      const textarea = element('textarea');
+      textarea.id = item.id + '-notes';
+      textarea.value = answer.notes || '';
+      textarea.placeholder = 'Add a decision detail or a note for the team…';
+      textarea.setAttribute('aria-describedby', item.id + '-hint');
+      textarea.addEventListener('input', () => updateAnswer(item.id, 'notes', textarea.value));
+      const hint = element('p', 'hint', 'Please add notes explaining your changes or reason for rejecting. Your decision is saved even without notes.');
+      hint.id = item.id + '-hint';
+      hint.hidden = true;
+      response.append(notesLabel, textarea, hint);
+      card.append(response);
+      return card;
+    }
+
+    function renderGroups() {
+      const groups = [...GROUPS];
+      // A future Pixel card needs only an ITEMS entry; unknown groups also render.
+      for (const item of ITEMS) {
+        if (!groups.some((group) => group.name === item.group)) groups.push({ name: item.group });
+      }
+      const parents = new Map();
+      for (const [index, group] of groups.entries()) {
+        let container = $('groups');
+        if (group.parent) {
+          if (!parents.has(group.parent)) {
+            const parent = element('section', 'group-parent');
+            const title = element('h2', '', group.parent);
+            title.id = 'parent-' + index;
+            parent.setAttribute('aria-labelledby', title.id);
+            parent.append(title);
+            container.append(parent);
+            parents.set(group.parent, parent);
+          }
+          container = parents.get(group.parent);
+        }
+        const section = element('section', 'group');
+        const heading = element('div', 'group-head');
+        const title = element(group.parent ? 'h3' : 'h2', 'group-title', group.name);
+        title.id = 'group-' + index;
+        section.setAttribute('aria-labelledby', title.id);
+        heading.append(element('span', 'group-number', String(index + 1).padStart(2, '0')), title);
+        section.append(heading);
+        const items = ITEMS.filter((item) => item.group === group.name);
+        if (group.description) {
+          section.append(element('p', 'group-description', items.length + ' decisions · ' + group.description));
+        }
+        if (items.length) {
+          for (const item of items) section.append(buildCard(item, group.parent ? 'h4' : 'h3'));
+        } else {
+          const empty = element('div', 'empty');
+          empty.append(element('strong', '', 'No decisions added yet.'), document.createTextNode(group.empty || 'No decisions added yet.'));
+          section.append(empty);
+        }
+        container.append(section);
+      }
+      refresh();
+    }
+
+    function missingNotes(item) {
+      const answer = answers[item.id] || {};
+      return ['CHANGES', 'REJECTED'].includes(answer.choice) && !(answer.notes || '').trim();
+    }
+
+    function missingOption(item) {
+      if (!item.options) return false;
+      const answer = answers[item.id] || {};
+      return answer.choice === 'APPROVED' && !['1', '2', '3', '4'].includes(String(answer.option || ''));
+    }
+
+    function choiceLabel(item, answer) {
+      const choice = answer.choice || 'UNANSWERED';
+      if (choice === 'APPROVED' && item.options && answer.option) return 'APPROVED (option ' + answer.option + ')';
+      return choice;
+    }
+
+    function refresh() {
+      const count = ITEMS.filter((item) => answers[item.id]?.choice).length;
+      $('progress').textContent = count + ' of ' + ITEMS.length + ' answered';
+      $('progress-bar').max = ITEMS.length;
+      $('progress-bar').value = count;
+      for (const item of ITEMS) {
+        const choice = answers[item.id]?.choice || '';
+        const card = $(item.id);
+        const answer = answers[item.id] || {};
+        card.dataset.choice = choice;
+        $(item.id + '-status').textContent = choiceLabel(item, answer);
+        const needsNotes = missingNotes(item);
+        const needsOption = missingOption(item);
+        card.classList.toggle('missing-notes', validationShown && (needsNotes || needsOption));
+        $(item.id + '-hint').hidden = !['CHANGES', 'REJECTED'].includes(choice);
+        if (item.options) {
+          const optionSet = $(item.id + '-options');
+          optionSet.hidden = choice !== 'APPROVED';
+          const optionHint = $(item.id + '-option-hint');
+          optionHint.hidden = !needsOption;
+        }
+        if (validationShown && needsNotes) $(item.id + '-notes').setAttribute('aria-invalid', 'true');
+        else $(item.id + '-notes').removeAttribute('aria-invalid');
+      }
+    }
+
+    function updateAnswer(id, field, value) {
+      answers[id] = { choice: '', notes: '', option: '', ...answers[id], [field]: value, timestamp: new Date().toISOString() };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
+        storageAvailable = true;
+      } catch (error) {
+        storageAvailable = false;
+      }
+      $('save-status').textContent = storageAvailable
+        ? 'Saved in this browser. Export to share or keep a backup.'
+        : 'Browser storage is unavailable. Copy or export to keep your answers.';
+      $('notice').textContent = '';
+      refresh();
+    }
+
+    // Exports include unanswered items and the last change time for each answer.
+    function structuredAnswers() {
+      return ITEMS.map((item) => {
+        const answer = answers[item.id] || {};
+        return {
+          id: item.id,
+          title: item.title,
+          choice: answer.choice || 'UNANSWERED',
+          option: item.options && answer.choice === 'APPROVED' && answer.option ? String(answer.option) : '',
+          notes: answer.notes || '',
+          timestamp: answer.timestamp || null
+        };
+      });
+    }
+
+    function plainText() {
+      return ITEMS.map((item) => {
+        const answer = answers[item.id] || {};
+        const label = choiceLabel(item, { choice: answer.choice || 'UNANSWERED', option: answer.option || '' });
+        const notes = (answer.notes || '').trim();
+        return '[' + item.id + '] ' + item.title + ' — ' + label + (notes ? ': ' + notes : '');
+      }).join('\n\n');
+    }
+
+    function validateForTransfer() {
+      validationShown = true;
+      refresh();
+      const missing = ITEMS.filter(missingNotes);
+      const missingOpts = ITEMS.filter(missingOption);
+      const parts = [];
+      if (missing.length) {
+        parts.push(missing.length + ' item' + (missing.length === 1 ? ' is' : 's are') + ' missing notes for CHANGES or REJECTED (' + missing.map((item) => item.id).join(', ') + ')');
+      }
+      if (missingOpts.length) {
+        parts.push(missingOpts.length + ' APPROVED item' + (missingOpts.length === 1 ? ' is' : 's are') + ' missing an option number (' + missingOpts.map((item) => item.id).join(', ') + ')');
+      }
+      return parts.length ? ' ' + parts.join('. ') + '. Highlighted cards need a choice or reason; answers are still included.' : '';
+    }
+
+    async function copyText(text) {
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
+        await navigator.clipboard.writeText(text);
+      } catch (error) {
+        // file:// and restricted browsers may need the older selection-based copy.
+        const previousFocus = document.activeElement;
+        const fallback = element('textarea');
+        fallback.value = text;
+        fallback.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+        document.body.append(fallback);
+        fallback.focus();
+        fallback.select();
+        let copied = false;
+        try { copied = document.execCommand('copy'); }
+        finally { fallback.remove(); previousFocus?.focus(); }
+        if (!copied) throw new Error('Copy unavailable');
+      }
+    }
+
+    $('copy').addEventListener('click', async () => {
+      const warning = validateForTransfer();
+      try {
+        await copyText(plainText());
+        $('notice').textContent = 'Answers copied, including unanswered items.' + warning;
+      } catch (error) {
+        $('notice').textContent = 'Copy is unavailable in this browser. Use Export to download your answers.' + warning;
+      }
+    });
+
+    function download(content, type, name) {
+      const url = URL.createObjectURL(new Blob([content], { type }));
+      const link = element('a');
+      link.href = url;
+      link.download = name;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      // Keep the blob alive long enough for the browser to begin the download.
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    }
+
+    $('export').addEventListener('click', () => {
+      const warning = validateForTransfer();
+      const filename = 'otv-audit-decisions-' + new Date().toISOString().slice(0, 10);
+      try {
+        download(plainText(), 'text/plain;charset=utf-8', filename + '.txt');
+        download(JSON.stringify(structuredAnswers(), null, 2), 'application/json;charset=utf-8', filename + '.json');
+        $('notice').textContent = 'TXT and JSON downloads requested. If prompted, allow both downloads in your browser.' + warning;
+      } catch (error) {
+        $('notice').textContent = 'Download could not start. Use Copy answers to keep your responses.' + warning;
+      }
+    });
+
+    $('reset').addEventListener('click', () => {
+      if (!window.confirm('Clear all decisions and notes saved for this page in this browser? Export first if you want a backup.')) return;
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        storageAvailable = true;
+      } catch (error) {
+        $('notice').textContent = 'Browser storage could not be cleared. Reset was not completed; your answers remain visible.';
+        return;
+      }
+      answers = {};
+      validationShown = false;
+      $('groups').replaceChildren();
+      renderGroups();
+      $('save-status').textContent = 'Answers autosave in this browser. Export to share or keep a backup.';
+      $('notice').textContent = 'All decisions and notes cleared.';
+    });
+
+    renderGroups();
+  </script>
+</body>
+</html>
