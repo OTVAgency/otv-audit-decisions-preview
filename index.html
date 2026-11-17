@@ -261,6 +261,7 @@
       .metrics { grid-template-columns:repeat(2,1fr); gap:8px; }
       .metric { padding:14px; }
       .toolbar { padding:12px 0; }
+      .save { line-height:1.6; min-height:3.2em; }
       .toolbar-inner { flex-direction:column; align-items:stretch; gap:12px; }
       .progress-row { display:flex; justify-content:space-between; gap:10px; align-items:center; }
       progress { width:100%; max-width:110px; margin:0; }
@@ -916,23 +917,16 @@
     }
 
     function updateAnswer(id, field, value) {
-      const wasAnswered = !!(answers[id] && answers[id].choice);
+      const scrollX = window.scrollX;
+      const scrollY = window.scrollY;
       answers[id] = { choice: '', notes: '', option: '', ...answers[id], [field]: value, timestamp: new Date().toISOString() };
       const saved = persistDraft();
       $('save-status').textContent = saved
         ? 'Draft saved in this browser.'
         : 'Browser storage is unavailable. Copy your answers so you don’t lose them.';
       $('notice').textContent = '';
-      const isAnswered = !!(answers[id] && answers[id].choice);
-      if (field === 'choice' && wasAnswered !== isAnswered) {
-        if ($('decided')) decidedOpen = $('decided').open || isAnswered;
-        else if (isAnswered) decidedOpen = true;
-        renderGroups();
-        const card = $(id);
-        if (card) card.scrollIntoView({ block: 'nearest' });
-      } else {
-        refresh();
-      }
+      refresh();
+      window.scrollTo(scrollX, scrollY);
     }
 
     function structuredAnswers() {
