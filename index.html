@@ -143,11 +143,20 @@
     .metric { border:1px solid var(--line); border-radius:12px; padding:18px; background:#fffdf9; }
     .metric b { display:block; color:var(--ink); font-size:26px; letter-spacing:-.04em; line-height:1.2; }
     .metric span { font-size:12px; color:var(--muted); }
-    details { margin-top:16px; padding:15px 18px; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
-    summary { cursor:pointer; font-size:14px; font-weight:650; }
+    .overview details { margin-top:16px; padding:15px 18px; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
+    .overview summary { cursor:pointer; font-size:14px; font-weight:650; }
     .readonly { color:var(--muted); font-size:12px; font-weight:400; margin-left:8px; }
-    details ol { padding-left:22px; font-size:14px; color:var(--muted); }
-    details li + li { margin-top:8px; }
+    .overview details ol { padding-left:22px; font-size:14px; color:var(--muted); }
+    .overview details li + li { margin-top:8px; }
+    .team-note { font-size:14px; color:var(--ink); background:#e1f1ef; border-radius:8px; padding:10px 12px; margin:0 0 16px; }
+    .team-note strong { display:block; font-size:11px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px; }
+    #decided { margin-top:38px; padding:8px 0 0; border:0; background:transparent; }
+    #decided > summary { cursor:pointer; font-size:24px; letter-spacing:-.035em; font-weight:700; list-style-position:outside; }
+    #decided-groups { margin-top:10px; }
+    #copy-fallback { width:100%; min-height:160px; margin-top:12px; font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; }
+    #copy-fallback[hidden] { display:none; }
+    .actions-link { border:0; background:transparent; color:var(--muted); text-decoration:underline; text-underline-offset:3px; padding:10px 8px; font-weight:650; }
+    .actions-link:hover { background:transparent; color:var(--ink); }
     .toolbar { position:sticky; top:0; z-index:3; background:var(--paper); border-bottom:1px solid #c8d2d0; padding:16px 0; box-shadow:0 5px 12px #111d2408; }
     .toolbar-inner { display:flex; justify-content:space-between; align-items:center; gap:20px; }
     #progress { font-weight:750; font-size:16px; }
@@ -272,7 +281,8 @@
       .toolbar { position:static; }
       .actions { display:none; }
       .card { break-inside:avoid; }
-      details { display:none; }
+      .overview details { display:none; }
+      #decided, #decided > * { display:block !important; }
     }
   </style>
 </head>
@@ -283,7 +293,7 @@
       <div class="brand"><span class="mark" aria-hidden="true">OTV</span> OTV AGENCY <span aria-hidden="true">/</span> SITE AUDIT</div>
       <p class="eyebrow">Cory Crawford · Decision review</p>
       <h1>A clearer path forward.<br>One decision at a time.</h1>
-      <p class="intro">Review the audit tasks, pricing recommendations, marketing plan, and qualified-lead booking flow. Approve, request changes, or reject each item, then copy or export your answers for the team.</p>
+      <p class="intro">Review the audit tasks, pricing recommendations, marketing plan, and qualified-lead booking flow. Approve, request changes, or reject each item. Answered items move into Decided below. Use Copy my answers to paste your verdicts for the team, and Save draft to keep work in this browser.</p>
       <p class="header-meta">Audit: November 14, 2026 ET · otv.agency · Read-only audit</p>
     </div>
   </header>
@@ -311,21 +321,24 @@
         <div class="toolbar-inner">
           <div>
             <div class="progress-row"><div id="progress" role="status" aria-live="polite">0 answered</div><progress id="progress-bar" max="1" value="0" aria-label="Answered decisions"></progress></div>
-            <span class="save" id="save-status">Answers autosave in this browser. Export to share or keep a backup.</span>
+            <span class="save" id="save-status">Save a draft in this browser so you don’t lose work if you leave the page.</span>
           </div>
           <div class="actions" aria-label="Answer actions">
-            <button class="primary" id="copy" type="button">Copy answers</button>
+            <button class="primary" id="copy" type="button">Copy my answers</button>
+            <button id="save-draft" type="button">Save draft</button>
             <button id="export" type="button">Export</button>
-            <button class="reset" id="reset" type="button">Reset</button>
+            <button class="actions-link" id="clear-draft" type="button">Clear draft</button>
           </div>
         </div>
         <p id="notice" role="status" aria-live="polite"></p>
+        <textarea id="copy-fallback" hidden readonly aria-label="Answers to copy"></textarea>
       </div>
     </div>
     <div class="wrap">
       <noscript><p>Enable JavaScript to view all decision cards, record answers, and copy or export them.</p></noscript>
       <div id="groups"></div>
-      <footer>Owner key: Forge = web dev · Pixel = creative · Nova = marketing/booking · Cory = decisions.<br>“Needs” preserves the original audit’s approval requirements. Nothing here changes the live site, DNS, mailbox, billing, or any client site. Answers stay in this browser until you copy or export them.</footer>
+      <div id="decided-root"></div>
+      <footer>Owner key: Forge = web dev · Pixel = creative · Nova = marketing/booking · Cory = decisions.<br>“Needs” preserves the original audit’s approval requirements. Nothing here changes the live site, DNS, mailbox, billing, or any client site. Use Copy my answers to share verdicts, and Save draft to keep work in this browser.</footer>
     </div>
   </main>
   <div id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Full-size preview">
@@ -337,31 +350,203 @@
   </div>
   <script>
     'use strict';
-    const STORAGE_KEY = 'otv-audit-decisions-v1';
+    const STORAGE_KEY = 'otv-decisions-draft-v1';
+    const PRESET_ANSWERS = {
+      "task-01": {
+            "choice": "CHANGES",
+            "notes": "He's unsure what \"publish Intake vs ship fallback\" means. Verge is explaining it."
+      },
+      "task-02": {
+            "choice": "APPROVED",
+            "notes": "He thinks this is already fixed. SMTP Test 3 was verified in both inboxes Nov 16."
+      },
+      "task-03": {
+            "choice": "CHANGES",
+            "notes": "The teamee88 alerts went to devtest@. We may need to change the admin emails on all managed sites. The best approach is still to be decided."
+      },
+      "task-04": {
+            "choice": "APPROVED",
+            "notes": "if it makes the site load faster."
+      },
+      "task-05": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "task-06": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "task-07": {
+            "choice": "CHANGES",
+            "notes": "Keep the shop, but repurpose it for digital products, and possibly business cards, logo design, and print marketing."
+      },
+      "task-08": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "task-09": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "task-10": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "task-11": {
+            "choice": "CHANGES",
+            "notes": "Use HubSpot as the source of truth for now."
+      },
+      "task-12": {
+            "choice": "APPROVED",
+            "notes": "Cory will get more quotes. Booking uses Google Meet: clients can book a phone call or a video call with him."
+      },
+      "task-13a": {
+            "choice": "CHANGES",
+            "notes": "The public email is info@otv.agency. Forms and submissions go to info@ first, with a CC to cory@."
+      },
+      "task-13b": {
+            "choice": "CHANGES",
+            "notes": "Drop the $500 new-client offer and take the prices off the site."
+      },
+      "task-14": {
+            "choice": "APPROVED",
+            "notes": "Cory handled it. A new card is on file."
+      },
+      "task-15": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "task-16": {
+            "choice": "APPROVED",
+            "notes": "Already fixed: Extendify was deactivated Nov 16."
+      },
+      "price-tier": {
+            "choice": "CHANGES",
+            "notes": "Hold off until everything else is set up."
+      },
+      "price-credit": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "price-woo": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "mkt-goal": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "mkt-audience": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "mkt-fix-first": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "mkt-offer-audit": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "mkt-offer-landing": {
+            "choice": "CHANGES",
+            "notes": "Keep it as a \"Get Started\" plan for some clients, but explain that it requires a monthly maintenance fee for hosting and to keep the domain live."
+      },
+      "mkt-offer-starter": {
+            "choice": "APPROVED",
+            "notes": "It also requires a monthly hosting and maintenance retainer."
+      },
+      "mkt-offer-social": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "mkt-pricing-align": {
+            "choice": "CHANGES",
+            "notes": "Get rid of the \"$500 off\" bundle."
+      },
+      "mkt-escalate": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "mkt-channels": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "mkt-paid-test": {
+            "choice": "CHANGES",
+            "notes": "Cory asked whether this means ads for people. Verge is explaining."
+      },
+      "mkt-rollout": {
+            "choice": "APPROVED",
+            "notes": "Push the start to Wed Nov 18, 2026."
+      },
+      "mkt-content": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "mkt-kpis": {
+            "choice": "APPROVED",
+            "notes": ""
+      },
+      "pixel-norman-quote": {
+            "choice": "APPROVED",
+            "notes": "Cory approved Nov 15, 2026: Norman's testimonial is fine for marketing, ads, and the decision page."
+      }
+};
+    const TEAM_NOTES = {
+      "task-01": "Verge explained it in chat; awaiting Cory's pick.",
+      "mkt-paid-test": "This means paid ads (Meta/Google) aimed at potential clients."
+};
+
     let answers = {};
     let validationShown = false;
     let storageAvailable = true;
+    let draftRestored = false;
+    let decidedOpen = false;
     const $ = (id) => document.getElementById(id);
 
-    // Accept only known IDs and choices when restoring browser data.
+    function emptyAnswer() {
+      return { choice: '', notes: '', option: '', timestamp: null };
+    }
+
+    function sanitizeEntry(item, entry) {
+      if (!entry || typeof entry !== 'object') return null;
+      return {
+        choice: ['APPROVED', 'CHANGES', 'REJECTED'].includes(entry.choice) ? entry.choice : '',
+        notes: typeof entry.notes === 'string' ? entry.notes : '',
+        option: item.options && ['1', '2', '3', '4'].includes(String(entry.option)) ? String(entry.option) : '',
+        timestamp: typeof entry.timestamp === 'string' ? entry.timestamp : null
+      };
+    }
+
+    function applyPresets() {
+      const next = {};
+      for (const item of ITEMS) {
+        const preset = PRESET_ANSWERS[item.id];
+        if (preset) next[item.id] = { ...emptyAnswer(), choice: preset.choice || '', notes: preset.notes || '' };
+      }
+      return next;
+    }
+
+    answers = applyPresets();
+
+    // Draft values override presets only for items the draft contains.
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
       if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+        let used = false;
         for (const item of ITEMS) {
-          const entry = saved[item.id];
-          if (entry && typeof entry === 'object') {
-            answers[item.id] = {
-              choice: ['APPROVED', 'CHANGES', 'REJECTED'].includes(entry.choice) ? entry.choice : '',
-              notes: typeof entry.notes === 'string' ? entry.notes : '',
-              option: item.options && ['1', '2', '3', '4'].includes(String(entry.option)) ? String(entry.option) : '',
-              timestamp: typeof entry.timestamp === 'string' ? entry.timestamp : null
-            };
+          if (!Object.prototype.hasOwnProperty.call(saved, item.id)) continue;
+          const entry = sanitizeEntry(item, saved[item.id]);
+          if (entry) {
+            answers[item.id] = entry;
+            used = true;
           }
         }
+        if (used) draftRestored = true;
       }
     } catch (error) {
       storageAvailable = false;
-      $('save-status').textContent = 'Browser storage is unavailable or unreadable. Copy or export to keep your answers.';
     }
 
     function element(tag, className, text) {
@@ -507,6 +692,11 @@
       card.append(metadata);
       if (item.openQuestion) card.append(element('p', 'open-question', 'Open question · Cory decision pending'));
       card.append(element('p', 'context', item.context));
+      if (TEAM_NOTES[item.id]) {
+        const note = element('p', 'team-note');
+        note.append(element('strong', '', 'Context'), document.createTextNode(TEAM_NOTES[item.id]));
+        card.append(note);
+      }
       if (item.bundlePath) {
         const p = element('p', 'bundle-link');
         const a = document.createElement('a');
@@ -592,15 +782,21 @@
       return card;
     }
 
-    function renderGroups() {
+    function hasChoice(item) {
+      return !!(answers[item.id] && answers[item.id].choice);
+    }
+
+    function renderGrouped(list, container) {
+      if (!list.length) return;
       const groups = [...GROUPS];
-      // A future Pixel card needs only an ITEMS entry; unknown groups also render.
-      for (const item of ITEMS) {
+      for (const item of list) {
         if (!groups.some((group) => group.name === item.group)) groups.push({ name: item.group });
       }
       const parents = new Map();
       for (const [index, group] of groups.entries()) {
-        let container = $('groups');
+        const items = list.filter((item) => item.group === group.name);
+        if (!items.length) continue;
+        let target = container;
         if (group.parent) {
           if (!parents.has(group.parent)) {
             const parent = element('section', 'group-parent');
@@ -611,28 +807,48 @@
             container.append(parent);
             parents.set(group.parent, parent);
           }
-          container = parents.get(group.parent);
+          target = parents.get(group.parent);
         }
         const section = element('section', 'group');
         const heading = element('div', 'group-head');
         const title = element(group.parent ? 'h3' : 'h2', 'group-title', group.name);
-        title.id = 'group-' + index;
+        title.id = 'group-' + index + (container.id ? '-' + container.id : '');
         section.setAttribute('aria-labelledby', title.id);
         heading.append(element('span', 'group-number', String(index + 1).padStart(2, '0')), title);
         section.append(heading);
-        const items = ITEMS.filter((item) => item.group === group.name);
         if (group.description) {
-          section.append(element('p', 'group-description', items.length + ' decisions · ' + group.description));
+          section.append(element('p', 'group-description', items.length + ' decision' + (items.length === 1 ? '' : 's') + ' · ' + group.description));
         }
-        if (items.length) {
-          for (const item of items) section.append(buildCard(item, group.parent ? 'h4' : 'h3'));
-        } else {
-          const empty = element('div', 'empty');
-          empty.append(element('strong', '', 'No decisions added yet.'), document.createTextNode(group.empty || 'No decisions added yet.'));
-          section.append(empty);
-        }
-        container.append(section);
+        for (const item of items) section.append(buildCard(item, group.parent ? 'h4' : 'h3'));
+        target.append(section);
       }
+    }
+
+    function renderGroups() {
+      const active = ITEMS.filter((item) => !hasChoice(item));
+      const decided = ITEMS.filter(hasChoice);
+      $('groups').replaceChildren();
+      $('decided-root').replaceChildren();
+      if (active.length) {
+        renderGrouped(active, $('groups'));
+      } else {
+        const empty = element('p', 'empty', 'No unanswered items. Decided items are in the section below.');
+        $('groups').append(empty);
+      }
+      const details = element('details');
+      details.id = 'decided';
+      details.open = decidedOpen;
+      const summary = element('summary');
+      const countLabel = decided.length + ' item' + (decided.length === 1 ? '' : 's');
+      summary.append(document.createTextNode('Decided'), element('span', 'readonly', countLabel));
+      details.append(summary);
+      const decidedGroups = element('div');
+      decidedGroups.id = 'decided-groups';
+      if (decided.length) renderGrouped(decided, decidedGroups);
+      else decidedGroups.append(element('p', 'empty', 'No decided items yet.'));
+      details.append(decidedGroups);
+      details.addEventListener('toggle', () => { decidedOpen = details.open; });
+      $('decided-root').append(details);
       refresh();
     }
 
@@ -654,13 +870,22 @@
     }
 
     function refresh() {
-      const count = ITEMS.filter((item) => answers[item.id]?.choice).length;
-      $('progress').textContent = count + ' of ' + ITEMS.length + ' answered';
+      const decidedCount = ITEMS.filter(hasChoice).length;
+      const remaining = ITEMS.length - decidedCount;
+      $('progress').textContent = remaining + ' remaining · ' + decidedCount + ' decided';
       $('progress-bar').max = ITEMS.length;
-      $('progress-bar').value = count;
+      $('progress-bar').value = decidedCount;
+      if ($('decided')) {
+        const summary = $('decided').querySelector('summary');
+        if (summary) {
+          summary.replaceChildren();
+          summary.append(document.createTextNode('Decided'), element('span', 'readonly', decidedCount + ' item' + (decidedCount === 1 ? '' : 's')));
+        }
+      }
       for (const item of ITEMS) {
         const choice = answers[item.id]?.choice || '';
         const card = $(item.id);
+        if (!card) continue;
         const answer = answers[item.id] || {};
         card.dataset.choice = choice;
         $(item.id + '-status').textContent = choiceLabel(item, answer);
@@ -679,22 +904,37 @@
       }
     }
 
-    function updateAnswer(id, field, value) {
-      answers[id] = { choice: '', notes: '', option: '', ...answers[id], [field]: value, timestamp: new Date().toISOString() };
+    function persistDraft() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
         storageAvailable = true;
+        return true;
       } catch (error) {
         storageAvailable = false;
+        return false;
       }
-      $('save-status').textContent = storageAvailable
-        ? 'Saved in this browser. Export to share or keep a backup.'
-        : 'Browser storage is unavailable. Copy or export to keep your answers.';
-      $('notice').textContent = '';
-      refresh();
     }
 
-    // Exports include unanswered items and the last change time for each answer.
+    function updateAnswer(id, field, value) {
+      const wasAnswered = !!(answers[id] && answers[id].choice);
+      answers[id] = { choice: '', notes: '', option: '', ...answers[id], [field]: value, timestamp: new Date().toISOString() };
+      const saved = persistDraft();
+      $('save-status').textContent = saved
+        ? 'Draft saved in this browser.'
+        : 'Browser storage is unavailable. Copy your answers so you don’t lose them.';
+      $('notice').textContent = '';
+      const isAnswered = !!(answers[id] && answers[id].choice);
+      if (field === 'choice' && wasAnswered !== isAnswered) {
+        if ($('decided')) decidedOpen = $('decided').open || isAnswered;
+        else if (isAnswered) decidedOpen = true;
+        renderGroups();
+        const card = $(id);
+        if (card) card.scrollIntoView({ block: 'nearest' });
+      } else {
+        refresh();
+      }
+    }
+
     function structuredAnswers() {
       return ITEMS.map((item) => {
         const answer = answers[item.id] || {};
@@ -709,13 +949,17 @@
       });
     }
 
-    function plainText() {
-      return ITEMS.map((item) => {
+    function copyLines() {
+      const lines = [];
+      for (const item of ITEMS) {
         const answer = answers[item.id] || {};
-        const label = choiceLabel(item, { choice: answer.choice || 'UNANSWERED', option: answer.option || '' });
         const notes = (answer.notes || '').trim();
-        return '[' + item.id + '] ' + item.title + ' — ' + label + (notes ? ': ' + notes : '');
-      }).join('\n\n');
+        const choice = answer.choice || '';
+        if (!choice && !notes) continue;
+        const verdict = choice || 'UNANSWERED';
+        lines.push('[' + item.id + '] ' + verdict + ': ' + notes);
+      }
+      return lines;
     }
 
     function validateForTransfer() {
@@ -734,32 +978,25 @@
     }
 
     async function copyText(text) {
-      try {
-        if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
-        await navigator.clipboard.writeText(text);
-      } catch (error) {
-        // file:// and restricted browsers may need the older selection-based copy.
-        const previousFocus = document.activeElement;
-        const fallback = element('textarea');
-        fallback.value = text;
-        fallback.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
-        document.body.append(fallback);
-        fallback.focus();
-        fallback.select();
-        let copied = false;
-        try { copied = document.execCommand('copy'); }
-        finally { fallback.remove(); previousFocus?.focus(); }
-        if (!copied) throw new Error('Copy unavailable');
-      }
+      if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('Clipboard API unavailable');
+      await navigator.clipboard.writeText(text);
     }
 
     $('copy').addEventListener('click', async () => {
+      const lines = copyLines();
+      const text = lines.join('\n');
+      const fallback = $('copy-fallback');
+      fallback.hidden = true;
       const warning = validateForTransfer();
       try {
-        await copyText(plainText());
-        $('notice').textContent = 'Answers copied, including unanswered items.' + warning;
+        await copyText(text);
+        $('notice').textContent = 'Copied ' + lines.length + ' answers' + warning;
       } catch (error) {
-        $('notice').textContent = 'Copy is unavailable in this browser. Use Export to download your answers.' + warning;
+        fallback.hidden = false;
+        fallback.value = text;
+        fallback.focus();
+        fallback.select();
+        $('notice').textContent = 'Copy isn’t available. Select the text below and copy it.';
       }
     });
 
@@ -771,7 +1008,6 @@
       document.body.append(link);
       link.click();
       link.remove();
-      // Keep the blob alive long enough for the browser to begin the download.
       setTimeout(() => URL.revokeObjectURL(url), 30000);
     }
 
@@ -779,30 +1015,50 @@
       const warning = validateForTransfer();
       const filename = 'otv-audit-decisions-' + new Date().toISOString().slice(0, 10);
       try {
-        download(plainText(), 'text/plain;charset=utf-8', filename + '.txt');
+        download(copyLines().join('\n'), 'text/plain;charset=utf-8', filename + '.txt');
         download(JSON.stringify(structuredAnswers(), null, 2), 'application/json;charset=utf-8', filename + '.json');
         $('notice').textContent = 'TXT and JSON downloads requested. If prompted, allow both downloads in your browser.' + warning;
       } catch (error) {
-        $('notice').textContent = 'Download could not start. Use Copy answers to keep your responses.' + warning;
+        $('notice').textContent = 'Download could not start. Use Copy my answers to keep your responses.' + warning;
       }
     });
 
-    $('reset').addEventListener('click', () => {
-      if (!window.confirm('Clear all decisions and notes saved for this page in this browser? Export first if you want a backup.')) return;
+    $('save-draft').addEventListener('click', () => {
+      if (persistDraft()) {
+        $('save-status').textContent = 'Draft saved in this browser.';
+        $('notice').textContent = 'Draft saved.';
+      } else {
+        $('save-status').textContent = 'Browser storage is unavailable. Copy your answers so you don’t lose them.';
+        $('notice').textContent = 'Draft could not be saved in this browser.';
+      }
+    });
+
+    $('clear-draft').addEventListener('click', () => {
+      if (!window.confirm('Clear the saved draft and restore the prefilled answers?')) return;
       try {
         localStorage.removeItem(STORAGE_KEY);
         storageAvailable = true;
       } catch (error) {
-        $('notice').textContent = 'Browser storage could not be cleared. Reset was not completed; your answers remain visible.';
+        $('notice').textContent = 'Browser storage could not be cleared. The draft was not removed.';
         return;
       }
-      answers = {};
+      answers = applyPresets();
       validationShown = false;
-      $('groups').replaceChildren();
+      draftRestored = false;
+      decidedOpen = false;
+      $('copy-fallback').hidden = true;
+      $('copy-fallback').value = '';
       renderGroups();
-      $('save-status').textContent = 'Answers autosave in this browser. Export to share or keep a backup.';
-      $('notice').textContent = 'All decisions and notes cleared.';
+      $('save-status').textContent = 'Draft cleared. Prefilled answers restored.';
+      $('notice').textContent = 'Draft cleared.';
     });
+
+    if (!storageAvailable) {
+      $('save-status').textContent = 'Browser storage is unavailable or unreadable. Copy your answers so you don’t lose them.';
+    } else if (draftRestored) {
+      $('save-status').textContent = 'Draft restored.';
+      $('notice').textContent = 'Draft restored';
+    }
 
     renderGroups();
 
